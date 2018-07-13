@@ -22,7 +22,6 @@ logger = logging.getLogger('icasso')
 class Icasso(object):
     """ A container for Icasso
     """
-
     def __init__(self, ica_class, ica_params, iterations=10, 
                  bootstrap=True, vary_init=True):
         """
@@ -33,9 +32,11 @@ class Icasso(object):
         self._bootstrap = bootstrap
         self._vary_init = vary_init
 
+        self._store = []
         self._fit = False
 
-    def fit(self, data, fit_params, random_state=None, bootstrap_fun=None, unmixing_fun=None):
+    def fit(self, data, fit_params, random_state=None, bootstrap_fun=None, 
+            unmixing_fun=None, store_fun=None):
         """ Use Icasso to given data.
         """
         if random_state is None:
@@ -69,6 +70,9 @@ class Icasso(object):
                 resampled_data = data
 
             ica.fit(resampled_data, **fit_params)
+
+            if store_fun:
+                self._store.append(store_fun(ica)) 
             
             if unmixing_fun:
                 unmixing = unmixing_fun(ica)
@@ -85,15 +89,19 @@ class Icasso(object):
 
         self._fit = True
 
-
     def _cluster(self, components):
         """ Apply agglomerative clustering with average-linkage criterion. """
         logger.info("Computing dissimilarity matrix")
-        self._dissimilarity = pdist(self._components, metric='correlation')
-        self._linkage = linkage(self._dissimilarity, method='average')
-
+        self._dissimilarity = np.sqrt(1 - np.abs(np.corrcoef(self._components)))
+        self._linkage = linkage(squareform(self._dissimilarity, checks=False), 
+                                method='average')
 
     def plot_dendrogram(self):
+        """
+        """
+        if not self._fit:
+            raise Exception("Model must be fitted before plotting") 
+
         logger.info("Plotting dendrogram..")
         plt.figure(figsize=(25, 10))
         plt.title('Hierarchical Clustering Dendrogram')
@@ -108,8 +116,9 @@ class Icasso(object):
         )
         plt.show()
 
-
     def plot_mds(self, distance=0.5, random_state=None):
+        """
+        """
         if not self._fit:
             raise Exception("Model must be fitted before plotting") 
 
@@ -117,19 +126,55 @@ class Icasso(object):
         mds = MDS(n_components=2, max_iter=3000, eps=1e-9, 
                   random_state=random_state, dissimilarity="precomputed")
 
-        mds.fit(squareform(self._dissimilarity))
+        mds.fit(self._dissimilarity)
         pos = mds.embedding_
 
-        clusters = fcluster(self._linkage, distance, criterion='distance')
+        cluster_idxs = fcluster(self._linkage, distance, criterion='distance')
 
         logger.info("Plotting ICA components in 2D space..")
-        colors = [np.random.rand(3,) for idx in range(max(clusters))]
+        colors = [np.random.rand(3,) for idx in range(max(cluster_idxs))]
         plt.figure()
         for idx in range(pos.shape[0]):
-            plt.scatter(pos[idx,0], pos[idx,1], c=colors[clusters[idx]-1],
+            plt.scatter(pos[idx,0], pos[idx,1], c=colors[cluster_idxs[idx]-1],
                         s=5)
         plt.show()
 
-    def get_centroid_unmixing(self):
-        pass
+    def get_centroid_unmixing(self, distance=0.5):
+        if not self._fit:
+            raise Exception("Model must be fitted before plotting") 
+
+        clusters_by_components = fcluster(self._linkage, distance, 
+                                          criterion='distance')
+
+        components_by_clusters = {}
+        for comp_idx, cluster_id in enumerate(clusters_by_components):
+            if cluster_id not in components_by_clusters:
+                components_by_clusters[cluster_id] = []
+            components_by_clusters[cluster_id].append(comp_idx)
+        components_by_clusters = sorted(components_by_clusters.items(), 
+                                        key=lambda x: x[0])
+        components_by_clusters = [val for key, val in components_by_clusters]
+
+        # Calculate quality index for compactness
+        # and isolation
+        similarities = np.abs(np.corrcoef(self._components))
+        scores = []
+        for idx, cluster in enumerate(components_by_clusters):
+            other_clusters = components_by_clusters[:idx] + components_by_clusters[idx+1:]
+            other_components = [comp for cluster in other_clusters for comp in cluster]
+            within_sum = sum([similarities[ii, jj] for ii in cluster for jj in cluster])
+            within_similarity = (1.0/len(cluster)**2)*within_sum
+            between_sum = sum([similarities[ii, jj] for ii in cluster for jj in other_components]) 
+            between_similarity = (1.0/(len(cluster)*len(other_components)))*between_sum
+            scores.append(within_similarity - between_similarity)
+
+        import pdb; pdb.set_trace()
+
+        # get centrotype (maximum similarity to other points in the cluster)
+        # order by compactness criterion
+        # return centroids
+        unmixing = None
+        scores = None
+
+        return unmixing, scores
 

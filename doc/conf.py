@@ -286,6 +286,6 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 sphinx_gallery_conf = {
-    'examples_dirs': '../icasso/examples',
+    'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
 }

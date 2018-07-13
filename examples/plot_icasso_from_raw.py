@@ -27,7 +27,6 @@ logging.basicConfig(level=logging.INFO)
 
 ###############################################################################
 # Setup paths and prepare raw data.
-
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
@@ -37,14 +36,17 @@ raw.filter(1, None, fir_design='firwin')  # already lowpassed @ 40
 random_state = 10
 
 ###############################################################################
-# Define parameters for mne's ICA-object and create a Icasso object.
+# Plot Raw data
+# raw.plot(block=True)
 
+###############################################################################
+# Define parameters for mne's ICA-object and create a Icasso object.
 ica_params = {
-    'n_components': 20,
+    'n_components': 30,
     'method': 'fastica',
     'max_iter': 1000,
 }
-icasso = Icasso(ICA, ica_params=ica_params, iterations=40, 
+icasso = Icasso(ICA, ica_params=ica_params, iterations=20, 
                 bootstrap=True, vary_init=True)
 
 ###############################################################################
@@ -55,7 +57,6 @@ picks = mne.pick_types(raw.info, meg='grad', eeg=False, eog=False,
 fit_params = {
     'picks': picks,
     'decim': 3,
-    'reject': dict(mag=4e-12, grad=4000e-13),
     'verbose': 'warning'
 }
 
@@ -89,7 +90,8 @@ def store_fun(ica):
 ###############################################################################
 # Fit icasso to raw data.
 icasso.fit(data=raw, fit_params=fit_params, random_state=random_state, 
-           bootstrap_fun=bootstrap_fun, unmixing_fun=unmixing_fun)
+           bootstrap_fun=bootstrap_fun, unmixing_fun=unmixing_fun, 
+           store_fun=store_fun)
 
 ###############################################################################
 # Plot a dendogram
@@ -101,11 +103,11 @@ icasso.plot_mds(distance=0.5, random_state=random_state)
 
 ###############################################################################
 # Unmix using the centroids
+unmixing, scores = icasso.get_centroid_unmixing(distance=0.5)
+pca_mean, pre_whitener = icasso.store[0]['pca_mean'], icasso.store[0]['pre_whitener']
+sources = np.dot(unmixing, (raw._data / pre_whitener) - pca_mean)
 
-# unmixing = icasso.get_centroid_unmixing()
-# Must remember here to sort the mean and whitener properly
-# pca_mean, pre_whitener = icasso.store[0]['pca_mean'], icasso.store[0]['pre_whitener']
-# sources = np.dot(unmixing, (raw._data * pre_whitener) - pca_mean)
+import pdb; pdb.set_trace()
 
 ###############################################################################
 # Create raw object using the icasso centroid sources and plot it
