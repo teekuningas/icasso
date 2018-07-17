@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Use Icasso to compute and validate ICA on MEG data &mdash; icasso 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/gallery.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="icasso 0.1.0 documentation" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Click <a class="reference internal" href="#sphx-glr-download-auto-examples-plot-icasso-from-raw-py"><span>here</span></a> to download the full example code</p>
+</div>
+<div class="sphx-glr-example-title section" id="use-icasso-to-compute-and-validate-ica-on-meg-data">
+<span id="tut-icasso"></span><span id="sphx-glr-auto-examples-plot-icasso-from-raw-py"></span><h1>Use Icasso to compute and validate ICA on MEG data<a class="headerlink" href="#use-icasso-to-compute-and-validate-ica-on-meg-data" title="Permalink to this headline">¶</a></h1>
+<p>ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Authors: Erkka Heinila &lt;erkka.heinila@jyu.fi&gt;</span>
+<span class="c">#</span>
+<span class="c"># License: BSD (3-clause)</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">mne</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <span class="n">ICA</span>
+<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <span class="n">create_ecg_epochs</span><span class="p">,</span> <span class="n">create_eog_epochs</span>
+<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+
+<span class="kn">from</span> <span class="nn">icasso</span> <span class="kn">import</span> <span class="n">Icasso</span>
+</pre></div>
+</div>
+<p>Set up logging</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Setup paths and prepare raw data.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">data_path</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">data_path</span><span class="p">()</span>
+<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+
+<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s">&#39;firwin&#39;</span><span class="p">)</span>
+
+<span class="n">picks</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                       <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s">&#39;bads&#39;</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">drop_channels</span><span class="p">([</span><span class="n">ch_name</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ch_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;ch_names&#39;</span><span class="p">])</span>
+                   <span class="k">if</span> <span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">picks</span><span class="p">])</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none"><div class="highlight"><pre>Opening raw data file /home/zairex/.virtualenvs/mne2/lib/python2.7/site-packages/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Read a total of 4 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+        Average EEG reference (1 x 60)  idle
+    Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+Ready.
+Current compensation grade : 0
+Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+Setting up high-pass filter at 1 Hz
+l_trans_bandwidth chosen to be 1.0 Hz
+Filter length of 497 samples (3.310 sec) selected
+</pre></div>
+</div>
+<p>Plot raw data</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_icasso_from_raw_001.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_001.png" />
+<p>Define parameters for mne&#8217;s ICA-object and create a Icasso object.
+Set bootstrap=True to use bootstrapping.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ica_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;n_components&#39;</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span>
+    <span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="s">&#39;fastica&#39;</span><span class="p">,</span>
+    <span class="s">&#39;max_iter&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">icasso</span> <span class="o">=</span> <span class="n">Icasso</span><span class="p">(</span><span class="n">ICA</span><span class="p">,</span> <span class="n">ica_params</span><span class="o">=</span><span class="n">ica_params</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                <span class="n">bootstrap</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">vary_init</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Set up params for ICA.fit method.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">fit_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;decim&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s">&#39;verbose&#39;</span><span class="p">:</span> <span class="s">&#39;warning&#39;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Set up function for getting bootstrapped versions of Raw object.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">bootstrap_fun</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">generator</span><span class="p">):</span>
+    <span class="n">sample_idxs</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">size</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">raw</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">_data</span><span class="p">[:,</span> <span class="n">sample_idxs</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">raw</span>
+</pre></div>
+</div>
+<p>Set up function to get unmixing matrix from mne&#8217;s ICA object after fitting.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">unmixing_fun</span><span class="p">(</span><span class="n">ica</span><span class="p">):</span>
+    <span class="n">unmixing_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ica</span><span class="o">.</span><span class="n">unmixing_matrix_</span><span class="p">,</span>
+                             <span class="n">ica</span><span class="o">.</span><span class="n">pca_components_</span><span class="p">[:</span><span class="n">ica</span><span class="o">.</span><span class="n">n_components_</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">unmixing_matrix</span>
+</pre></div>
+</div>
+<p>Set up function to store information about individual runs.
+We do this to get pca mean and pre_whiten information.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">store_fun</span><span class="p">(</span><span class="n">ica</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;pre_whitener&#39;</span><span class="p">:</span> <span class="n">ica</span><span class="o">.</span><span class="n">pre_whitener_</span><span class="p">,</span>
+            <span class="s">&#39;pca_mean&#39;</span><span class="p">:</span> <span class="n">ica</span><span class="o">.</span><span class="n">pca_mean_</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]}</span>
+    <span class="k">return</span> <span class="n">data</span>
+</pre></div>
+</div>
+<p>For replicability</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">random_state</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">distance</span> <span class="o">=</span> <span class="mf">0.75</span>
+</pre></div>
+</div>
+<p>Fit icasso to raw data.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">icasso</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">raw</span><span class="p">,</span> <span class="n">fit_params</span><span class="o">=</span><span class="n">fit_params</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
+           <span class="n">bootstrap_fun</span><span class="o">=</span><span class="n">bootstrap_fun</span><span class="p">,</span> <span class="n">unmixing_fun</span><span class="o">=</span><span class="n">unmixing_fun</span><span class="p">,</span>
+           <span class="n">store_fun</span><span class="o">=</span><span class="n">store_fun</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Plot a dendogram</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">icasso</span><span class="o">.</span><span class="n">plot_dendrogram</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_icasso_from_raw_002.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_002.png" />
+<p>Plot the components in 2D space.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">icasso</span><span class="o">.</span><span class="n">plot_mds</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_icasso_from_raw_003.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_003.png" />
+<p>Unmix using the centrotypes</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">unmixing</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">icasso</span><span class="o">.</span><span class="n">get_centrotype_unmixing</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">)</span>
+<span class="n">pca_mean</span><span class="p">,</span> <span class="n">pre_whitener</span> <span class="o">=</span> <span class="n">icasso</span><span class="o">.</span><span class="n">store</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;pca_mean&#39;</span><span class="p">],</span> <span class="n">icasso</span><span class="o">.</span><span class="n">store</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;pre_whitener&#39;</span><span class="p">]</span>
+<span class="n">sources</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">unmixing</span><span class="p">,</span> <span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">_data</span> <span class="o">/</span> <span class="n">pre_whitener</span><span class="p">)</span> <span class="o">-</span> <span class="n">pca_mean</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Create raw object using the icasso centrotype sources and plot it</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span> <span class="o">*</span> <span class="mf">3e-04</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">create_info</span><span class="p">([</span><span class="s">&#39;ICA </span><span class="si">%03d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
+                       <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">ch_types</span><span class="o">=</span><span class="s">&#39;misc&#39;</span><span class="p">)</span>
+<span class="n">components</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">RawArray</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+<span class="n">components</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_icasso_from_raw_004.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_004.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none"><div class="highlight"><pre>Creating RawArray with float64 data, n_channels=20, n_times=41700
+    Range : 0 ... 41699 =      0.000 ...   277.709 secs
+Ready.
+</pre></div>
+</div>
+<p><strong>Total running time of the script:</strong> ( 1 minutes  42.095 seconds)</p>
+<div class="sphx-glr-footer class sphx-glr-footer-example container" id="sphx-glr-download-auto-examples-plot-icasso-from-raw-py">
+<div class="sphx-glr-download container">
+<a class="reference download internal" href="../_downloads/plot_icasso_from_raw.py"><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_icasso_from_raw.py</span></code></a></div>
+<div class="sphx-glr-download container">
+<a class="reference download internal" href="../_downloads/plot_icasso_from_raw.ipynb"><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_icasso_from_raw.ipynb</span></code></a></div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.readthedocs.io">Gallery generated by Sphinx-Gallery</a></p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/auto_examples/plot_icasso_from_raw.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Erkka Heinila.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/auto_examples/plot_icasso_from_raw.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
