@@ -10,6 +10,10 @@ python setup.py install
 
 Hope it goes fine!
 
+## Examples
+
+Rendered examples can be found [here.](https://teekuningas.github.io/icasso)
+
 ## Contributing
 
 Contributions are welcome. For example extending the available methods for multidimensional scaling and clustering would be great. Also finding bugs and improving code is essential.
