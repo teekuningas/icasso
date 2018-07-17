@@ -4,7 +4,7 @@
 Use Icasso to compute and validate ICA on MEG data
 ============================================
 
-ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centroids of the most robust clusters.
+ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.
 """
 # Authors: Erkka Heinila <erkka.heinila@jyu.fi>
 #
@@ -31,31 +31,31 @@ data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
 raw = mne.io.read_raw_fif(raw_fname, preload=True)
-raw.filter(1, None, fir_design='firwin')  # already lowpassed @ 40
+raw.filter(1, None, fir_design='firwin')
 
-random_state = 10
+picks = mne.pick_types(raw.info, meg='grad', eeg=False, eog=False,
+                       stim=False, exclude='bads')
+raw.drop_channels([ch_name for idx, ch_name in enumerate(raw.info['ch_names'])
+                   if idx not in picks])
 
 ###############################################################################
-# Plot Raw data
-# raw.plot(block=True)
+# Plot raw data
+raw.plot(block=True)
 
 ###############################################################################
 # Define parameters for mne's ICA-object and create a Icasso object.
+# Set bootstrap=True to use bootstrapping.
 ica_params = {
-    'n_components': 30,
+    'n_components':20,
     'method': 'fastica',
     'max_iter': 1000,
 }
-icasso = Icasso(ICA, ica_params=ica_params, iterations=20, 
-                bootstrap=True, vary_init=True)
+icasso = Icasso(ICA, ica_params=ica_params, iterations=30, 
+                bootstrap=False, vary_init=True)
 
 ###############################################################################
-# Pick good gradiometer channels and set up params for ICA.fit method.
-picks = mne.pick_types(raw.info, meg='grad', eeg=False, eog=False,
-                       stim=False, exclude='bads')
-
+# Set up params for ICA.fit method.
 fit_params = {
-    'picks': picks,
     'decim': 3,
     'verbose': 'warning'
 }
@@ -63,13 +63,9 @@ fit_params = {
 ###############################################################################
 # Set up function for getting bootstrapped versions of Raw object.
 def bootstrap_fun(raw, generator):
+    sample_idxs = generator.choice(range(raw._data.shape[1]), size=raw._data.shape[1])
     raw = raw.copy()
-    raw._data = np.apply_along_axis(
-        func1d=generator.choice,
-        axis=1,
-        arr=raw._data,
-        size=raw._data.shape[1],
-        replace=True)
+    raw._data = raw._data[:, sample_idxs]
     return raw
 
 ###############################################################################
@@ -83,9 +79,14 @@ def unmixing_fun(ica):
 # Set up function to store information about individual runs. 
 # We do this to get pca mean and pre_whiten information.
 def store_fun(ica):
-    data = {'pre_whitener': ica.pre_whitener_.T,
-            'pca_mean': ica.pca_mean_[np.newaxis, :]}
+    data = {'pre_whitener': ica.pre_whitener_,
+            'pca_mean': ica.pca_mean_[:, np.newaxis]}
     return data
+
+###############################################################################
+# For replicability
+random_state = 10
+distance = 0.75
 
 ###############################################################################
 # Fit icasso to raw data.
@@ -99,20 +100,18 @@ icasso.plot_dendrogram()
 
 ###############################################################################
 # Plot the components in 2D space.
-icasso.plot_mds(distance=0.5, random_state=random_state)
+icasso.plot_mds(distance=distance, random_state=random_state)
 
 ###############################################################################
-# Unmix using the centroids
-unmixing, scores = icasso.get_centroid_unmixing(distance=0.5)
+# Unmix using the centrotypes
+unmixing, scores = icasso.get_centrotype_unmixing(distance=distance)
 pca_mean, pre_whitener = icasso.store[0]['pca_mean'], icasso.store[0]['pre_whitener']
 sources = np.dot(unmixing, (raw._data / pre_whitener) - pca_mean)
 
-import pdb; pdb.set_trace()
-
 ###############################################################################
-# Create raw object using the icasso centroid sources and plot it
-
-# info = None
-# components = mne.io.RawArray(sources, info)
-# components.plot()
-
+# Create raw object using the icasso centrotype sources and plot it
+sources = sources * 3e-04
+info = mne.create_info(['ICA %03d' % idx for idx in range(sources.shape[0])], 
+                       raw.info['sfreq'], ch_types='misc')
+components = mne.io.RawArray(sources, info)
+components.plot(block=True)

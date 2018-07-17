@@ -13,6 +13,8 @@ from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import dendrogram
 from scipy.cluster.hierarchy import fcluster
 
+from scipy.spatial import ConvexHull
+
 from sklearn.manifold import MDS
 
 
@@ -32,7 +34,7 @@ class Icasso(object):
         self._bootstrap = bootstrap
         self._vary_init = vary_init
 
-        self._store = []
+        self.store = []
         self._fit = False
 
     def fit(self, data, fit_params, random_state=None, bootstrap_fun=None, 
@@ -58,12 +60,8 @@ class Icasso(object):
             ica = self._ica_class(random_state=seeds[i], **self._ica_params)
 
             if self._bootstrap and not bootstrap_fun: 
-                resampled_data = np.apply_along_axis(
-                    func1d=generator.choice,
-                    axis=1,
-                    arr=data,
-                    size=data.shape[1],
-                    replace=True)
+                sample_idxs = generator.choice(range(data.shape[1]), size=data.shape[1])
+                resampled_data = data[:, sample_idxs]
             elif self._bootstrap and bootstrap_fun:
                 resampled_data = bootstrap_fun(data, generator)
             else:
@@ -72,7 +70,7 @@ class Icasso(object):
             ica.fit(resampled_data, **fit_params)
 
             if store_fun:
-                self._store.append(store_fun(ica)) 
+                self.store.append(store_fun(ica)) 
             
             if unmixing_fun:
                 unmixing = unmixing_fun(ica)
@@ -90,14 +88,14 @@ class Icasso(object):
         self._fit = True
 
     def _cluster(self, components):
-        """ Apply agglomerative clustering with average-linkage criterion. """
-        logger.info("Computing dissimilarity matrix")
+        """ Apply agglomerative clustering with average-linkage criterion and 
+        correlation-based dissimilarity. """
         self._dissimilarity = np.sqrt(1 - np.abs(np.corrcoef(self._components)))
         self._linkage = linkage(squareform(self._dissimilarity, checks=False), 
                                 method='average')
 
     def plot_dendrogram(self):
-        """
+        """ Plots dendrogram of the linkage
         """
         if not self._fit:
             raise Exception("Model must be fitted before plotting") 
@@ -116,8 +114,8 @@ class Icasso(object):
         )
         plt.show()
 
-    def plot_mds(self, distance=0.5, random_state=None):
-        """
+    def plot_mds(self, distance=0.8, random_state=None):
+        """ Plots components projected to 2d space and draws hulls around clusters
         """
         if not self._fit:
             raise Exception("Model must be fitted before plotting") 
@@ -129,23 +127,81 @@ class Icasso(object):
         mds.fit(self._dissimilarity)
         pos = mds.embedding_
 
-        cluster_idxs = fcluster(self._linkage, distance, criterion='distance')
+        clusters_by_components = fcluster(self._linkage, distance, criterion='distance')
+
+        components_by_clusters = self._get_components_by_clusters(
+            clusters_by_components)
+
+        # compute hulls for clusters
+        convex_hulls = [
+            pos[np.array(cluster)[ConvexHull([pos[idx] for idx 
+                                              in cluster]).vertices]]
+                        for cluster in components_by_clusters]
+
+        scores = self._get_scores(components_by_clusters)
 
         logger.info("Plotting ICA components in 2D space..")
-        colors = [np.random.rand(3,) for idx in range(max(cluster_idxs))]
+
+        # plot components as points in 2d plane
         plt.figure()
-        for idx in range(pos.shape[0]):
-            plt.scatter(pos[idx,0], pos[idx,1], c=colors[cluster_idxs[idx]-1],
-                        s=5)
+        sc = plt.scatter(pos[:, 0], pos[:, 1], c='red', s=5)
+
+        # draw hulls
+        sorted_hulls = [hull for hull, _ in sorted(zip(convex_hulls, scores),
+                                                   key=lambda x: x[1],
+                                                   reverse=True)]
+        for hull_idx, hull in enumerate(sorted_hulls):
+            leftmost_pos = None
+            for idx in range(len(hull)):
+                start_idx, end_idx = idx, idx+1
+                if end_idx == len(hull):
+                    end_idx = 0
+
+                x = hull[start_idx][0], hull[end_idx][0]
+                y = hull[start_idx][1], hull[end_idx][1]
+                plt.plot(x, y, color='black')
+
+                if leftmost_pos is None or hull[start_idx][0] < leftmost_pos[0]:
+                    leftmost_pos = hull[start_idx]
+            xlim = plt.xlim()
+            plt.text(leftmost_pos[0] - 0.03*(xlim[1] - xlim[0]), leftmost_pos[1], str(hull_idx+1))
+            
         plt.show()
 
-    def get_centroid_unmixing(self, distance=0.5):
+    def get_centrotype_unmixing(self, distance=0.8):
         if not self._fit:
             raise Exception("Model must be fitted before plotting") 
 
         clusters_by_components = fcluster(self._linkage, distance, 
                                           criterion='distance')
 
+        components_by_clusters = self._get_components_by_clusters(
+            clusters_by_components)
+        scores = self._get_scores(components_by_clusters)
+        similarities = np.abs(np.corrcoef(self._components))
+
+        centrotypes = []
+        for cluster in components_by_clusters:
+            centrotype = None
+            max_simsum = None
+            for component_idx in cluster:
+                simsum = sum([similarities[component_idx, other_idx] for 
+                               other_idx in cluster])
+                if max_simsum == None or simsum > max_simsum:
+                    max_simsum = simsum
+                    centrotype = self._components[component_idx]
+
+            centrotypes.append(centrotype)
+
+        unmixing_matrix = np.array([centrotype for centrotype, _ in 
+                                    sorted(zip(centrotypes, scores), 
+                                           key=lambda x: x[1])])
+
+        return unmixing_matrix[::-1, :], sorted(scores)[::-1]
+
+    def _get_components_by_clusters(self, clusters_by_components):
+        """ Converts clusters-by-components representation to
+        components-by-clusters """
         components_by_clusters = {}
         for comp_idx, cluster_id in enumerate(clusters_by_components):
             if cluster_id not in components_by_clusters:
@@ -154,27 +210,22 @@ class Icasso(object):
         components_by_clusters = sorted(components_by_clusters.items(), 
                                         key=lambda x: x[0])
         components_by_clusters = [val for key, val in components_by_clusters]
+        return components_by_clusters
+        
 
-        # Calculate quality index for compactness
-        # and isolation
+    def _get_scores(self, components_by_clusters):
+        """ Calculate quality index for compactness
+        and isolation """
         similarities = np.abs(np.corrcoef(self._components))
         scores = []
+        
         for idx, cluster in enumerate(components_by_clusters):
             other_clusters = components_by_clusters[:idx] + components_by_clusters[idx+1:]
-            other_components = [comp for cluster in other_clusters for comp in cluster]
+            other_components = [comp for cluster_ in other_clusters for comp in cluster_]
             within_sum = sum([similarities[ii, jj] for ii in cluster for jj in cluster])
             within_similarity = (1.0/len(cluster)**2)*within_sum
             between_sum = sum([similarities[ii, jj] for ii in cluster for jj in other_components]) 
             between_similarity = (1.0/(len(cluster)*len(other_components)))*between_sum
             scores.append(within_similarity - between_similarity)
 
-        import pdb; pdb.set_trace()
-
-        # get centrotype (maximum similarity to other points in the cluster)
-        # order by compactness criterion
-        # return centroids
-        unmixing = None
-        scores = None
-
-        return unmixing, scores
-
+        return scores
