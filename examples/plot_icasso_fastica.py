@@ -70,10 +70,14 @@ icasso.fit(data=X, fit_params={}, random_state=random_state,
            bootstrap_fun=bootstrap_fun, unmixing_fun=unmixing_fun)
 
 ##############################################################################
-# Plot dendrogram and mds
+# Plot dendrogram
 icasso.plot_dendrogram()
+
+##############################################################################
+# Plot mds
 icasso.plot_mds(distance=distance, random_state=random_state)
 
+##############################################################################
 # Get the unmixing matrix and use it get the sources.
 W_, scores = icasso.get_centrotype_unmixing(distance=distance)
 S_ = np.dot(W_, X.T).T

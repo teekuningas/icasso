@@ -10,3 +10,4 @@ Welcome to icasso's example gallery!
    :maxdepth: 2
 
 * :ref:`sphx_glr_auto_examples_plot_icasso_from_raw.py`
+* :ref:`sphx_glr_auto_examples_plot_icasso_fastica.py`
