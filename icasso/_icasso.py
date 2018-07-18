@@ -39,7 +39,10 @@ class Icasso(object):
 
     def fit(self, data, fit_params, random_state=None, bootstrap_fun=None, 
             unmixing_fun=None, store_fun=None):
-        """ Use Icasso to given data.
+        """ Use Icasso to given data. Input data should be in 
+        (n_features, n_samples) format. Also the given ICA class 
+        should have fit-method. Note that you may specify unmixing_fun
+        to get around of (n_features, n_samples) limitation.
         """
         if random_state is None:
             generator = np.random.RandomState()
@@ -60,8 +63,13 @@ class Icasso(object):
             ica = self._ica_class(random_state=seeds[i], **self._ica_params)
 
             if self._bootstrap and not bootstrap_fun: 
-                sample_idxs = generator.choice(range(data.shape[1]), size=data.shape[1])
-                resampled_data = data[:, sample_idxs]
+                try:
+                    sample_idxs = generator.choice(range(data.shape[1]), size=data.shape[1])
+                    resampled_data = data[:, sample_idxs]
+                except Exception as exc:
+                    raise Exception(''.join([
+                        ica.__class__, "'s data attribute works unexpectedly. ",
+                        'Maybe you could give a custom bootstrap function.']))
             elif self._bootstrap and bootstrap_fun:
                 resampled_data = bootstrap_fun(data, generator)
             else:
@@ -75,7 +83,12 @@ class Icasso(object):
             if unmixing_fun:
                 unmixing = unmixing_fun(ica)
             else:
-                unmixing = ica.unmixing_
+                try:
+                    unmixing = ica.unmixing_
+                except Exception as exc:
+                    raise Exception(''.join([
+                        ica.__class__, ' does not have attribute unmixing_. ',
+                        'Maybe you could give a custom unmixing function']))
 
             components.extend(
                 [component[0] for component in 
