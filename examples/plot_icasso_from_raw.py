@@ -10,10 +10,11 @@ ICA is fit to MEG raw data multiple times, and the performance is then visually 
 #
 # License: BSD (3-clause)
 
-import numpy as np
-
-import mne
 import logging
+
+import numpy as np
+import matplotlib.pyplot as plt
+import mne
 
 from mne.preprocessing import ICA
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
@@ -50,7 +51,7 @@ ica_params = {
     'method': 'fastica',
     'max_iter': 1000,
 }
-icasso = Icasso(ICA, ica_params=ica_params, iterations=30, 
+icasso = Icasso(ICA, ica_params=ica_params, iterations=20, 
                 bootstrap=False, vary_init=True)
 
 ###############################################################################
@@ -107,6 +108,16 @@ icasso.plot_mds(distance=distance, random_state=random_state)
 unmixing, scores = icasso.get_centrotype_unmixing(distance=distance)
 pca_mean, pre_whitener = icasso.store[0]['pca_mean'], icasso.store[0]['pre_whitener']
 sources = np.dot(unmixing, (raw._data / pre_whitener) - pca_mean)
+
+###############################################################################
+# Show cluster quality indices.
+plt.figure()
+plt.plot(range(1, len(scores)+1), scores)
+plt.xticks(range(1, len(scores)+1), 
+           [str(idx) for idx in range(1, len(scores)+1)])
+plt.xlabel('Component')
+plt.ylabel('Quality index')
+plt.show()
 
 ###############################################################################
 # Create raw object using the icasso centrotype sources and plot it
