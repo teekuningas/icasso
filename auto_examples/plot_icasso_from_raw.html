@@ -37,7 +37,7 @@
 <p class="last">Click <a class="reference internal" href="#sphx-glr-download-auto-examples-plot-icasso-from-raw-py"><span class="std std-ref">here</span></a> to download the full example code</p>
 </div>
 <div class="sphx-glr-example-title section" id="use-icasso-to-compute-and-validate-ica-on-meg-data">
-<span id="tut-icasso"></span><span id="sphx-glr-auto-examples-plot-icasso-from-raw-py"></span><h1>Use Icasso to compute and validate ICA on MEG data<a class="headerlink" href="#use-icasso-to-compute-and-validate-ica-on-meg-data" title="Permalink to this headline">¶</a></h1>
+<span id="tut-icasso-meg"></span><span id="sphx-glr-auto-examples-plot-icasso-from-raw-py"></span><h1>Use Icasso to compute and validate ICA on MEG data<a class="headerlink" href="#use-icasso-to-compute-and-validate-ica-on-meg-data" title="Permalink to this headline">¶</a></h1>
 <p>ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Erkka Heinila &lt;erkka.heinila@jyu.fi&gt;</span>
 <span class="c1">#</span>
@@ -101,7 +101,7 @@ Set bootstrap=True to use bootstrapping.</p>
     <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;fastica&#39;</span><span class="p">,</span>
     <span class="s1">&#39;max_iter&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="n">icasso</span> <span class="o">=</span> <span class="n">Icasso</span><span class="p">(</span><span class="n">ICA</span><span class="p">,</span> <span class="n">ica_params</span><span class="o">=</span><span class="n">ica_params</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">icasso</span> <span class="o">=</span> <span class="n">Icasso</span><span class="p">(</span><span class="n">ICA</span><span class="p">,</span> <span class="n">ica_params</span><span class="o">=</span><span class="n">ica_params</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
                 <span class="n">bootstrap</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">vary_init</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -175,7 +175,7 @@ We do this to get pca mean and pre_whiten information.</p>
 <img alt="../_images/sphx_glr_plot_icasso_from_raw_004.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_004.png" />
 <p>Create raw object using the icasso centrotype sources and plot it</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span> <span class="o">*</span> <span class="mf">3e-04</span>
-<span class="n">info</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">create_info</span><span class="p">([</span><span class="s1">&#39;ICA </span><span class="si">%03d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">create_info</span><span class="p">([</span><span class="s1">&#39;ICA </span><span class="si">%03d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
                        <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">ch_types</span><span class="o">=</span><span class="s1">&#39;misc&#39;</span><span class="p">)</span>
 <span class="n">components</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">RawArray</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 <span class="n">components</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -183,12 +183,12 @@ We do this to get pca mean and pre_whiten information.</p>
 </div>
 <img alt="../_images/sphx_glr_plot_icasso_from_raw_005.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_005.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Creating RawArray with float64 data, n_channels=21, n_times=41700
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Creating RawArray with float64 data, n_channels=20, n_times=41700
     Range : 0 ... 41699 =      0.000 ...   277.709 secs
 Ready.
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  25.691 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 1 minutes  4.577 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-icasso-from-raw-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_icasso_from_raw.py" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_icasso_from_raw.py</span></code></a></div>

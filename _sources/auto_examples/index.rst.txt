@@ -5,6 +5,26 @@
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="FastICA is fit multiple times to simple example data and performance can be visually inspected....">
+
+.. only:: html
+
+    .. figure:: /auto_examples/images/thumb/sphx_glr_plot_icasso_fastica_thumb.png
+
+        :ref:`sphx_glr_auto_examples_plot_icasso_fastica.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/plot_icasso_fastica
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Fina...">
 
 .. only:: html

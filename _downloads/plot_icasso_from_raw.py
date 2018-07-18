@@ -1,5 +1,5 @@
 """
-.. _tut_icasso:
+.. _tut_icasso_meg:
 
 Use Icasso to compute and validate ICA on MEG data
 ============================================
@@ -51,7 +51,7 @@ ica_params = {
     'method': 'fastica',
     'max_iter': 1000,
 }
-icasso = Icasso(ICA, ica_params=ica_params, iterations=20, 
+icasso = Icasso(ICA, ica_params=ica_params, iterations=30, 
                 bootstrap=False, vary_init=True)
 
 ###############################################################################
@@ -122,7 +122,7 @@ plt.show()
 ###############################################################################
 # Create raw object using the icasso centrotype sources and plot it
 sources = sources * 3e-04
-info = mne.create_info(['ICA %03d' % idx for idx in range(sources.shape[0])], 
+info = mne.create_info(['ICA %03d' % (idx+1) for idx in range(sources.shape[0])], 
                        raw.info['sfreq'], ch_types='misc')
 components = mne.io.RawArray(sources, info)
 components.plot(block=True)

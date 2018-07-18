@@ -7,7 +7,7 @@
 .. _sphx_glr_auto_examples_plot_icasso_from_raw.py:
 
 
-.. _tut_icasso:
+.. _tut_icasso_meg:
 
 Use Icasso to compute and validate ICA on MEG data
 ============================================
@@ -22,10 +22,11 @@ ICA is fit to MEG raw data multiple times, and the performance is then visually 
     #
     # License: BSD (3-clause)
 
-    import numpy as np
-
-    import mne
     import logging
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import mne
 
     from mne.preprocessing import ICA
     from mne.preprocessing import create_ecg_epochs, create_eog_epochs
@@ -35,6 +36,13 @@ ICA is fit to MEG raw data multiple times, and the performance is then visually 
 
 
 
+
+.. code-block:: pytb
+
+    Traceback (most recent call last):
+      File "/home/zairex/Code/icasso/examples/plot_icasso_from_raw.py", line 23, in <module>
+        from icasso import Icasso
+    ImportError: No module named icasso
 
 
 
@@ -46,11 +54,6 @@ Set up logging
 .. code-block:: python
 
     logging.basicConfig(level=logging.INFO)
-
-
-
-
-
 
 
 Setup paths and prepare raw data.
@@ -71,30 +74,6 @@ Setup paths and prepare raw data.
                        if idx not in picks])
 
 
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out:
-
- .. code-block:: none
-
-    Opening raw data file /home/zairex/.virtualenvs/mne2/lib/python2.7/site-packages/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-            Average EEG reference (1 x 60)  idle
-        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-    Ready.
-    Current compensation grade : 0
-    Reading 0 ... 41699  =      0.000 ...   277.709 secs...
-    Setting up high-pass filter at 1 Hz
-    l_trans_bandwidth chosen to be 1.0 Hz
-    Filter length of 497 samples (3.310 sec) selected
-
-
 Plot raw data
 
 
@@ -102,14 +81,6 @@ Plot raw data
 .. code-block:: python
 
     raw.plot(block=True)
-
-
-
-
-.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_001.png
-    :class: sphx-glr-single-img
-
-
 
 
 Define parameters for mne's ICA-object and create a Icasso object.
@@ -128,11 +99,6 @@ Set bootstrap=True to use bootstrapping.
                     bootstrap=False, vary_init=True)
 
 
-
-
-
-
-
 Set up params for ICA.fit method.
 
 
@@ -143,11 +109,6 @@ Set up params for ICA.fit method.
         'decim': 3,
         'verbose': 'warning'
     }
-
-
-
-
-
 
 
 Set up function for getting bootstrapped versions of Raw object.
@@ -163,11 +124,6 @@ Set up function for getting bootstrapped versions of Raw object.
         return raw
 
 
-
-
-
-
-
 Set up function to get unmixing matrix from mne's ICA object after fitting.
 
 
@@ -178,11 +134,6 @@ Set up function to get unmixing matrix from mne's ICA object after fitting.
         unmixing_matrix = np.dot(ica.unmixing_matrix_, 
                                  ica.pca_components_[:ica.n_components_])
         return unmixing_matrix
-
-
-
-
-
 
 
 Set up function to store information about individual runs. 
@@ -198,11 +149,6 @@ We do this to get pca mean and pre_whiten information.
         return data
 
 
-
-
-
-
-
 For replicability
 
 
@@ -211,11 +157,6 @@ For replicability
 
     random_state = 10
     distance = 0.75
-
-
-
-
-
 
 
 Fit icasso to raw data.
@@ -229,11 +170,6 @@ Fit icasso to raw data.
                store_fun=store_fun)
 
 
-
-
-
-
-
 Plot a dendogram
 
 
@@ -243,14 +179,6 @@ Plot a dendogram
     icasso.plot_dendrogram()
 
 
-
-
-.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_002.png
-    :class: sphx-glr-single-img
-
-
-
-
 Plot the components in 2D space.
 
 
@@ -258,14 +186,6 @@ Plot the components in 2D space.
 .. code-block:: python
 
     icasso.plot_mds(distance=distance, random_state=random_state)
-
-
-
-
-.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_003.png
-    :class: sphx-glr-single-img
-
-
 
 
 Unmix using the centrotypes
@@ -279,9 +199,19 @@ Unmix using the centrotypes
     sources = np.dot(unmixing, (raw._data / pre_whitener) - pca_mean)
 
 
+Show cluster quality indices.
 
 
 
+.. code-block:: python
+
+    plt.figure()
+    plt.plot(range(1, len(scores)+1), scores)
+    plt.xticks(range(1, len(scores)+1), 
+               [str(idx) for idx in range(1, len(scores)+1)])
+    plt.xlabel('Component')
+    plt.ylabel('Quality index')
+    plt.show()
 
 
 Create raw object using the icasso centrotype sources and plot it
@@ -291,29 +221,12 @@ Create raw object using the icasso centrotype sources and plot it
 .. code-block:: python
 
     sources = sources * 3e-04
-    info = mne.create_info(['ICA %03d' % idx for idx in range(sources.shape[0])], 
+    info = mne.create_info(['ICA %03d' % (idx+1) for idx in range(sources.shape[0])], 
                            raw.info['sfreq'], ch_types='misc')
     components = mne.io.RawArray(sources, info)
     components.plot(block=True)
 
-
-
-.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_004.png
-    :class: sphx-glr-single-img
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out:
-
- .. code-block:: none
-
-    Creating RawArray with float64 data, n_channels=20, n_times=41700
-        Range : 0 ... 41699 =      0.000 ...   277.709 secs
-    Ready.
-
-
-**Total running time of the script:** ( 1 minutes  42.095 seconds)
+**Total running time of the script:** ( 0 minutes  0.000 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_icasso_from_raw.py:
