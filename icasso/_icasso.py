@@ -107,25 +107,28 @@ class Icasso(object):
         self._linkage = linkage(squareform(self._dissimilarity, checks=False), 
                                 method='average')
 
-    def plot_dendrogram(self):
+    def plot_dendrogram(self, show=True):
         """ Plots dendrogram of the linkage
         """
         if not self._fit:
             raise Exception("Model must be fitted before plotting") 
 
         logger.info("Plotting dendrogram..")
-        plt.figure(figsize=(25, 10))
-        plt.title('Hierarchical Clustering Dendrogram')
-        plt.xlabel('Sample index')
-        plt.ylabel('Distance')
+        fig, ax = plt.subplots(figsize=(25,10))
+        fig.suptitle('Hierarchical Clustering Dendrogram')
+        ax.set_xlabel('Sample index')
+        ax.set_ylabel('Distance')
         dendrogram(
             self._linkage,
             leaf_rotation=90.,
             leaf_font_size=1.,
             show_leaf_counts=False,
             no_labels=True,
+            ax=ax
         )
-        plt.show()
+        if show:
+            plt.show()
+        return fig
 
     def plot_mds(self, distance=0.8, random_state=None):
         """ Plots components projected to 2d space and draws hulls around clusters
