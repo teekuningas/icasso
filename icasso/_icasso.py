@@ -46,7 +46,7 @@ class Icasso(object):
         """
         if random_state is None:
             generator = np.random.RandomState()
-        else:
+        elif isinstance(random_state, int):
             generator = np.random.RandomState(random_state)
 
         if self._vary_init:
@@ -130,7 +130,7 @@ class Icasso(object):
             plt.show()
         return fig
 
-    def plot_mds(self, distance=0.8, random_state=None):
+    def plot_mds(self, distance=0.8, random_state=None, show=True):
         """ Plots components projected to 2d space and draws hulls around clusters
         """
         if not self._fit:
@@ -149,18 +149,27 @@ class Icasso(object):
             clusters_by_components)
 
         # compute hulls for clusters
-        convex_hulls = [
-            pos[np.array(cluster)[ConvexHull([pos[idx] for idx 
-                                              in cluster]).vertices]]
-                        for cluster in components_by_clusters]
+        convex_hulls = []
+        for cluster in components_by_clusters:
+            points = [pos[idx] for idx in cluster]
+            if len(points) > 2:
+                hull = pos[np.array(cluster)[ConvexHull(points).vertices]]
+                convex_hulls.append(hull)
+
+        # convex_hulls = [
+        #     pos[np.array(cluster)[ConvexHull([pos[idx] for idx 
+        #                                       in cluster]).vertices]]
+        #                 for cluster in components_by_clusters]
 
         scores = self._get_scores(components_by_clusters)
 
         logger.info("Plotting ICA components in 2D space..")
 
         # plot components as points in 2d plane
-        plt.figure()
-        sc = plt.scatter(pos[:, 0], pos[:, 1], c='red', s=5)
+
+        fig, ax = plt.subplots(figsize=(25,10))
+        fig.suptitle('MDS')
+        sc = ax.scatter(pos[:, 0], pos[:, 1], c='red', s=5)
 
         # draw hulls
         sorted_hulls = [hull for hull, _ in sorted(zip(convex_hulls, scores),
@@ -175,14 +184,18 @@ class Icasso(object):
 
                 x = hull[start_idx][0], hull[end_idx][0]
                 y = hull[start_idx][1], hull[end_idx][1]
-                plt.plot(x, y, color='black')
+                ax.plot(x, y, color='black')
 
                 if leftmost_pos is None or hull[start_idx][0] < leftmost_pos[0]:
                     leftmost_pos = hull[start_idx]
             xlim = plt.xlim()
-            plt.text(leftmost_pos[0] - 0.03*(xlim[1] - xlim[0]), leftmost_pos[1], str(hull_idx+1))
+            ax.text(leftmost_pos[0] - 0.03*(xlim[1] - xlim[0]), 
+                    leftmost_pos[1], 
+                    str(hull_idx+1))
             
-        plt.show()
+        if show:
+            plt.show()
+        return fig
 
     def get_centrotype_unmixing(self, distance=0.8):
         if not self._fit:

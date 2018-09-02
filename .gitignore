@@ -1,4 +1,5 @@
 *.pyc
+icasso.egg-info
 doc/auto_examples
 doc/_build
 doc/_static
