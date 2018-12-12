@@ -1,1 +1,1 @@
-from _icasso import Icasso
+from ._icasso import Icasso
