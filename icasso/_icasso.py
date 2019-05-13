@@ -49,11 +49,12 @@ class Icasso(object):
         elif isinstance(random_state, int):
             generator = np.random.RandomState(random_state)
 
+        max_int = 2**31 - 2
         if self._vary_init:
-            seeds = [generator.randint(0, 2**32) for i in 
+            seeds = [generator.randint(0, max_int) for i in
                      range(self._iterations)]
         else:
-            seeds = [generator.randint(0, 2**32)] * self._iterations
+            seeds = [generator.randint(0, max_int)] * self._iterations
 
         components = []
 
