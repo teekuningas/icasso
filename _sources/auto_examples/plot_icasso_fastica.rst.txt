@@ -6,8 +6,6 @@
 
 .. _sphx_glr_auto_examples_plot_icasso_fastica.py:
 
- 
-
 .. _tut_icasso_fastica:
 
 Extend scikit-learn FastICA example to use Icasso
@@ -15,13 +13,13 @@ Extend scikit-learn FastICA example to use Icasso
 
 FastICA is fit multiple times to simple example data and performance can be visually inspected.
 
-
-
-.. code-block:: python
+.. code-block:: default
 
     # Authors: Erkka Heinila <erkka.heinila@jyu.fi>
     #
     # License BSD (3-clause)
+
+    from itertools import cycle
 
     import numpy as np
     import matplotlib.pyplot as plt
@@ -43,11 +41,10 @@ FastICA is fit multiple times to simple example data and performance can be visu
 For replicability
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     random_state = 50
-    distance=0.15
+    distance=0.12
 
 
 
@@ -58,8 +55,7 @@ For replicability
 Generate sample data
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     n_samples = 2000
     time = np.linspace(0, 8, n_samples)
@@ -79,8 +75,7 @@ Generate sample data
 Add noise and standardize
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     S += 0.4 * np.random.RandomState(random_state).normal(size=S.shape)
     S /= S.std(axis=0)
@@ -94,8 +89,7 @@ Add noise and standardize
 Mix data
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     A = np.array([[1, 1, 1], [0.5, 2, 1.0], [1.5, 1.0, 2.0]])
     X = np.dot(S, A.T)
@@ -109,8 +103,7 @@ Mix data
 Define functions for extracting bootstraps and unmixing matrices from ica object
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     def bootstrap_fun(data, generator): 
         return data[generator.choice(range(data.shape[0]), size=data.shape[0]), :]
@@ -127,8 +120,7 @@ Define functions for extracting bootstraps and unmixing matrices from ica object
 Create the Icasso object
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     ica_params = {
         'n_components': 3
@@ -145,8 +137,7 @@ Create the Icasso object
 Fit the Icasso
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     icasso.fit(data=X, fit_params={}, random_state=random_state, 
                bootstrap_fun=bootstrap_fun, unmixing_fun=unmixing_fun)
@@ -160,8 +151,7 @@ Fit the Icasso
 Plot dendrogram
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     icasso.plot_dendrogram()
 
@@ -177,8 +167,7 @@ Plot dendrogram
 Plot mds
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     icasso.plot_mds(distance=distance, random_state=random_state)
 
@@ -194,8 +183,7 @@ Plot mds
 Get the unmixing matrix and use it get the sources.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     W_, scores = icasso.get_centrotype_unmixing(distance=distance)
     S_ = np.dot(W_, X.T).T
@@ -208,9 +196,9 @@ Get the unmixing matrix and use it get the sources.
     names = ['Observations (mixed signal)',
              'True Sources',
              'ICA recovered signals']
-    colors = ['red', 'steelblue', 'orange']
 
     for ii, (model, name) in enumerate(zip(models, names), 1):
+        colors = cycle(['red', 'steelblue', 'orange', 'green', 'yellow'])
         plt.subplot(4, 1, ii)
         plt.title(name)
         for sig, color in zip(model.T, colors):
@@ -227,7 +215,10 @@ Get the unmixing matrix and use it get the sources.
 
 
 
-**Total running time of the script:** ( 0 minutes  5.555 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  5.872 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_icasso_fastica.py:

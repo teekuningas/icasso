@@ -38,28 +38,30 @@
 <div class="sphx-glr-example-title section" id="extend-scikit-learn-fastica-example-to-use-icasso">
 <span id="tut-icasso-fastica"></span><span id="sphx-glr-auto-examples-plot-icasso-fastica-py"></span><h1>Extend scikit-learn FastICA example to use Icasso<a class="headerlink" href="#extend-scikit-learn-fastica-example-to-use-icasso" title="Permalink to this headline">¶</a></h1>
 <p>FastICA is fit multiple times to simple example data and performance can be visually inspected.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Erkka Heinila &lt;erkka.heinila@jyu.fi&gt;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Erkka Heinila &lt;erkka.heinila@jyu.fi&gt;</span>
 <span class="c1">#</span>
 <span class="c1"># License BSD (3-clause)</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">cycle</span>
 
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
-<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">FastICA</span>
-<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">PCA</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">signal</span>
 
-<span class="kn">from</span> <span class="nn">icasso</span> <span class="kn">import</span> <span class="n">Icasso</span>
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">FastICA</span>
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">PCA</span>
+
+<span class="kn">from</span> <span class="nn">icasso</span> <span class="k">import</span> <span class="n">Icasso</span>
 </pre></div>
 </div>
 <p>For replicability</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">random_state</span> <span class="o">=</span> <span class="mi">50</span>
-<span class="n">distance</span><span class="o">=</span><span class="mf">0.15</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">random_state</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">distance</span><span class="o">=</span><span class="mf">0.12</span>
 </pre></div>
 </div>
 <p>Generate sample data</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_samples</span> <span class="o">=</span> <span class="mi">2000</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n_samples</span> <span class="o">=</span> <span class="mi">2000</span>
 <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
 
 <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">time</span><span class="p">)</span>  <span class="c1"># Signal 1 : sinusoidal signal</span>
@@ -70,17 +72,17 @@
 </pre></div>
 </div>
 <p>Add noise and standardize</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">S</span> <span class="o">+=</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">S</span> <span class="o">+=</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="n">S</span> <span class="o">/=</span> <span class="n">S</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Mix data</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]])</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Define functions for extracting bootstraps and unmixing matrices from ica object</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">bootstrap_fun</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">generator</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">bootstrap_fun</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">generator</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">generator</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">size</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="p">:]</span>
 
 <span class="k">def</span> <span class="nf">unmixing_fun</span><span class="p">(</span><span class="n">ica</span><span class="p">):</span>
@@ -88,30 +90,30 @@
 </pre></div>
 </div>
 <p>Create the Icasso object</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ica_params</span> <span class="o">=</span> <span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ica_params</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;n_components&#39;</span><span class="p">:</span> <span class="mi">3</span>
 <span class="p">}</span>
-<span class="n">icasso</span> <span class="o">=</span> <span class="n">Icasso</span><span class="p">(</span><span class="n">FastICA</span><span class="p">,</span> <span class="n">ica_params</span><span class="o">=</span><span class="n">ica_params</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bootstrap</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                <span class="n">vary_init</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">icasso</span> <span class="o">=</span> <span class="n">Icasso</span><span class="p">(</span><span class="n">FastICA</span><span class="p">,</span> <span class="n">ica_params</span><span class="o">=</span><span class="n">ica_params</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bootstrap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">vary_init</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Fit the Icasso</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">fit_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">fit_params</span><span class="o">=</span><span class="p">{},</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span>
            <span class="n">bootstrap_fun</span><span class="o">=</span><span class="n">bootstrap_fun</span><span class="p">,</span> <span class="n">unmixing_fun</span><span class="o">=</span><span class="n">unmixing_fun</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Plot dendrogram</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">plot_dendrogram</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">plot_dendrogram</span><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_icasso_fastica_001.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_fastica_001.png" />
 <p>Plot mds</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">plot_mds</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">plot_mds</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_icasso_fastica_002.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_fastica_002.png" />
 <p>Get the unmixing matrix and use it get the sources.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">W_</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">icasso</span><span class="o">.</span><span class="n">get_centrotype_unmixing</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">W_</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">icasso</span><span class="o">.</span><span class="n">get_centrotype_unmixing</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">)</span>
 <span class="n">S_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W_</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
 
 <span class="c1"># #############################################################################</span>
@@ -122,9 +124,9 @@
 <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Observations (mixed signal)&#39;</span><span class="p">,</span>
          <span class="s1">&#39;True Sources&#39;</span><span class="p">,</span>
          <span class="s1">&#39;ICA recovered signals&#39;</span><span class="p">]</span>
-<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;steelblue&#39;</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">]</span>
 
 <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">names</span><span class="p">),</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="n">cycle</span><span class="p">([</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;steelblue&#39;</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">])</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ii</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">sig</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">colors</span><span class="p">):</span>
@@ -135,7 +137,7 @@
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_icasso_fastica_003.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_fastica_003.png" />
-<p><strong>Total running time of the script:</strong> ( 0 minutes  5.555 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  5.872 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-icasso-fastica-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/43535a8a8e2822037ba30ee3be3f2f7f/plot_icasso_fastica.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_icasso_fastica.py</span></code></a></p>

@@ -14,9 +14,7 @@ Use Icasso to compute and validate ICA on MEG data
 
 ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.
 
-
-
-.. code-block:: python
+.. code-block:: default
 
     # Authors: Erkka Heinila <erkka.heinila@jyu.fi>
     #
@@ -43,8 +41,7 @@ ICA is fit to MEG raw data multiple times, and the performance is then visually 
 Set up logging
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     logging.basicConfig(level=logging.INFO)
 
@@ -57,8 +54,7 @@ Set up logging
 Setup paths and prepare raw data.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     data_path = sample.data_path()
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
@@ -81,7 +77,7 @@ Setup paths and prepare raw data.
 
  .. code-block:: none
 
-    Opening raw data file /home/zairex/.virtualenvs/mne2/lib/python2.7/site-packages/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Opening raw data file /home/zairex/Code/cibr/sample_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
         Read a total of 4 projection items:
             PCA-v1 (1 x 102)  idle
             PCA-v2 (1 x 102)  idle
@@ -99,8 +95,7 @@ Setup paths and prepare raw data.
 Plot raw data
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     raw.plot(block=True)
 
@@ -117,8 +112,7 @@ Define parameters for mne's ICA-object and create a Icasso object.
 Set bootstrap=True to use bootstrapping.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     ica_params = {
         'n_components':20,
@@ -137,8 +131,7 @@ Set bootstrap=True to use bootstrapping.
 Set up params for ICA.fit method.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     fit_params = {
         'decim': 3,
@@ -154,8 +147,7 @@ Set up params for ICA.fit method.
 Set up function for getting bootstrapped versions of Raw object.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     def bootstrap_fun(raw, generator):
         sample_idxs = generator.choice(range(raw._data.shape[1]), size=raw._data.shape[1])
@@ -172,8 +164,7 @@ Set up function for getting bootstrapped versions of Raw object.
 Set up function to get unmixing matrix from mne's ICA object after fitting.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     def unmixing_fun(ica):
         unmixing_matrix = np.dot(ica.unmixing_matrix_, 
@@ -190,8 +181,7 @@ Set up function to store information about individual runs.
 We do this to get pca mean and pre_whiten information.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     def store_fun(ica):
         data = {'pre_whitener': ica.pre_whitener_,
@@ -207,8 +197,7 @@ We do this to get pca mean and pre_whiten information.
 For replicability
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     random_state = 10
     distance = 0.75
@@ -222,8 +211,7 @@ For replicability
 Fit icasso to raw data.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     icasso.fit(data=raw, fit_params=fit_params, random_state=random_state, 
                bootstrap_fun=bootstrap_fun, unmixing_fun=unmixing_fun, 
@@ -238,8 +226,7 @@ Fit icasso to raw data.
 Plot a dendogram
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     icasso.plot_dendrogram()
 
@@ -255,8 +242,7 @@ Plot a dendogram
 Plot the components in 2D space.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     icasso.plot_mds(distance=distance, random_state=random_state)
 
@@ -272,8 +258,7 @@ Plot the components in 2D space.
 Unmix using the centrotypes
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     unmixing, scores = icasso.get_centrotype_unmixing(distance=distance)
     pca_mean, pre_whitener = icasso.store[0]['pca_mean'], icasso.store[0]['pre_whitener']
@@ -288,8 +273,7 @@ Unmix using the centrotypes
 Show cluster quality indices.
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     plt.figure()
     plt.plot(range(1, len(scores)+1), scores)
@@ -311,8 +295,7 @@ Show cluster quality indices.
 Create raw object using the icasso centrotype sources and plot it
 
 
-
-.. code-block:: python
+.. code-block:: default
 
     sources = sources * 3e-04
     info = mne.create_info(['ICA %03d' % (idx+1) for idx in range(sources.shape[0])], 
@@ -332,12 +315,15 @@ Create raw object using the icasso centrotype sources and plot it
 
  .. code-block:: none
 
-    Creating RawArray with float64 data, n_channels=20, n_times=41700
+    Creating RawArray with float64 data, n_channels=21, n_times=41700
         Range : 0 ... 41699 =      0.000 ...   277.709 secs
     Ready.
 
 
-**Total running time of the script:** ( 1 minutes  23.153 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 1 minutes  53.367 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_icasso_from_raw.py:
