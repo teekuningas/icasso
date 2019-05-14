@@ -11,6 +11,8 @@ FastICA is fit multiple times to simple example data and performance can be visu
 #
 # License BSD (3-clause)
 
+from itertools import cycle
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -25,7 +27,7 @@ from icasso import Icasso
 ##############################################################################
 # For replicability
 random_state = 50
-distance=0.15
+distance=0.12
 
 ##############################################################################
 # Generate sample data
@@ -90,9 +92,9 @@ models = [X, S, S_,]
 names = ['Observations (mixed signal)',
          'True Sources',
          'ICA recovered signals']
-colors = ['red', 'steelblue', 'orange']
 
 for ii, (model, name) in enumerate(zip(models, names), 1):
+    colors = cycle(['red', 'steelblue', 'orange', 'green', 'yellow'])
     plt.subplot(4, 1, ii)
     plt.title(name)
     for sig, color in zip(model.T, colors):
