@@ -3,3 +3,4 @@ doc/auto_examples
 doc/_build
 doc/_static
 doc/_templates
+icasso.egg-info
