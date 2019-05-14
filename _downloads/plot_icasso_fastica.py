@@ -3,7 +3,7 @@
 .. _tut_icasso_fastica:
 
 Extend scikit-learn FastICA example to use Icasso
-=========================================
+=================================================
 
 FastICA is fit multiple times to simple example data and performance can be visually inspected.
 """

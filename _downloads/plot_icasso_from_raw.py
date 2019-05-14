@@ -2,7 +2,7 @@
 .. _tut_icasso_meg:
 
 Use Icasso to compute and validate ICA on MEG data
-============================================
+==================================================
 
 ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.
 """

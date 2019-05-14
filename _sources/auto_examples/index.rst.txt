@@ -2,10 +2,14 @@
 
 
 
+.. _sphx_glr_auto_examples:
+
+
+
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="FastICA is fit multiple times to simple example data and performance can be visually inspected....">
+    <div class="sphx-glr-thumbcontainer" tooltip="FastICA is fit multiple times to simple example data and performance can be visually inspected.">
 
 .. only:: html
 

@@ -10,7 +10,7 @@
 .. _tut_icasso_meg:
 
 Use Icasso to compute and validate ICA on MEG data
-============================================
+==================================================
 
 ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.
 
@@ -337,7 +337,7 @@ Create raw object using the icasso centrotype sources and plot it
     Ready.
 
 
-**Total running time of the script:** ( 1 minutes  4.577 seconds)
+**Total running time of the script:** ( 1 minutes  23.153 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_icasso_from_raw.py:
