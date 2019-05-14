@@ -106,8 +106,11 @@ class Icasso(object):
     def _cluster(self, components):
         """ Apply agglomerative clustering with average-linkage criterion and
         correlation-based dissimilarity. """
-        self._dissimilarity = np.sqrt(
-            1 - np.abs(np.corrcoef(self._components)))
+        dissim = np.sqrt(1 - np.abs(np.corrcoef(self._components)))
+
+        # ensure symmetry for MDS
+        self._dissimilarity = np.triu(dissim.T, k=1) + np.tril(dissim)
+
         self._linkage = linkage(squareform(self._dissimilarity, checks=False),
                                 method='average')
 
