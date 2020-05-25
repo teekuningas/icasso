@@ -137,7 +137,7 @@ class Icasso(object):
             plt.show()
         return fig
 
-    def plot_mds(self, distance=0.8, random_state=None, show=True):
+    def plot_mds(self, distance=0.8, random_state=None, show=True, decimate=1):
         """ Plots components projected to 2d space and draws hulls around clusters
         """
         if not self._fit:
@@ -147,14 +147,26 @@ class Icasso(object):
         mds = MDS(n_components=2, max_iter=3000, eps=1e-9,
                   random_state=random_state, dissimilarity="precomputed")
 
-        mds.fit(self._dissimilarity)
+        dissimilarity = self._dissimilarity.copy()
+
+        # mds very slow so keep every decimate'th
+        kept_idxs = [idx for idx in range(0, dissimilarity.shape[0], decimate)]
+        dropped_idxs = [idx for idx in range(dissimilarity.shape[0]) if idx not in kept_idxs]
+
+        dissimilarity = np.delete(np.delete(dissimilarity, dropped_idxs, 0), dropped_idxs, 1)
+
+        mds.fit(dissimilarity)
         pos = mds.embedding_
 
         clusters_by_components = fcluster(
             self._linkage, distance, criterion='distance')
 
+        clusters_by_components = np.delete(clusters_by_components, dropped_idxs, 0)
+
         components_by_clusters = self._get_components_by_clusters(
             clusters_by_components)
+
+        scores = self._get_scores(components_by_clusters)
 
         # compute hulls for clusters
         convex_hulls = []
@@ -163,13 +175,6 @@ class Icasso(object):
             if len(points) > 2:
                 hull = pos[np.array(cluster)[ConvexHull(points).vertices]]
                 convex_hulls.append(hull)
-
-        # convex_hulls = [
-        #     pos[np.array(cluster)[ConvexHull([pos[idx] for idx
-        #                                       in cluster]).vertices]]
-        #                 for cluster in components_by_clusters]
-
-        scores = self._get_scores(components_by_clusters)
 
         logger.info("Plotting ICA components in 2D space..")
 
