@@ -152,13 +152,12 @@ class Icasso(object):
 
         dissimilarity = self._dissimilarity.copy()
 
-        # mds very slow so keep every decimate'th
-        kept_idxs = self._generator.choice(
+        # mds is very slow so keep every decimate'th
+        kept_idxs = sorted(self._generator.choice(
             range(dissimilarity.shape[0]), size=int(dissimilarity.shape[0]/decimate),
-            replace=False)
+            replace=False))
 
         dropped_idxs = [idx for idx in range(dissimilarity.shape[0]) if idx not in kept_idxs]
-
         dissimilarity = np.delete(np.delete(dissimilarity, dropped_idxs, 0), dropped_idxs, 1)
 
         mds.fit(dissimilarity)
@@ -167,34 +166,52 @@ class Icasso(object):
         clusters_by_components = fcluster(
             self._linkage, distance, criterion='distance')
 
-        clusters_by_components = np.delete(clusters_by_components, dropped_idxs, 0)
-
         components_by_clusters = self._get_components_by_clusters(
             clusters_by_components)
 
+        # use non-decimated comps to get correct scores
         scores = self._get_scores(components_by_clusters)
+
+        # filter out comps not present in pos
+        decim_comps_by_clusters = []
+        for comps in components_by_clusters:
+            new_comps = []
+            for comp_idx in comps:
+                try:
+                    # find correct idx "in reverse" from kept_idxs
+                    new_comps.append(kept_idxs.index(comp_idx))
+                except ValueError:
+                    continue
+            decim_comps_by_clusters.append(new_comps)
 
         # compute hulls for clusters
         convex_hulls = []
-        for cluster in components_by_clusters:
+        for cluster in decim_comps_by_clusters:
             points = [pos[idx] for idx in cluster]
+
+            # to make it very improbable to get coplanarity
             if len(points) > 3:
                 hull = pos[np.array(cluster)[ConvexHull(points).vertices]]
                 convex_hulls.append(hull)
+            else:
+                convex_hulls.append(None)
 
         logger.info("Plotting ICA components in 2D space..")
 
-        # plot components as points in 2d plane
-
+        # plot components as points in 2D plane
         fig, ax = plt.subplots(figsize=(25, 10))
         fig.suptitle('MDS')
         sc = ax.scatter(pos[:, 0], pos[:, 1], c='red', s=5)
 
-        # draw hulls
+        # now there should be as many hulls as there are scores so we
+        # can sort to put correct labels next to hulls
         sorted_hulls = [hull for hull, _ in sorted(zip(convex_hulls, scores),
                                                    key=lambda x: x[1],
                                                    reverse=True)]
+
         for hull_idx, hull in enumerate(sorted_hulls):
+            if hull is None:
+                continue
             leftmost_pos = None
             for idx in range(len(hull)):
                 start_idx, end_idx = idx, idx+1
