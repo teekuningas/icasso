@@ -1,6 +1,6 @@
 *.pyc
 icasso.egg-info
-doc/auto_examples
-doc/_build
-doc/_static
-doc/_templates
+sphinx
+docs
+build
+dist
