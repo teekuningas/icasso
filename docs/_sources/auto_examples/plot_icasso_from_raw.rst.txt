@@ -1,0 +1,429 @@
+.. only:: html
+
+    .. note::
+        :class: sphx-glr-download-link-note
+
+        Click :ref:`here <sphx_glr_download_auto_examples_plot_icasso_from_raw.py>`     to download the full example code
+    .. rst-class:: sphx-glr-example-title
+
+    .. _sphx_glr_auto_examples_plot_icasso_from_raw.py:
+
+
+.. _tut_icasso_meg:
+
+Use Icasso to compute and validate ICA on MEG data
+==================================================
+
+ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.
+
+
+.. code-block:: default
+
+    # Authors: Erkka Heinila <erkka.heinila@jyu.fi>
+    #
+    # License: BSD (3-clause)
+
+    import logging
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import mne
+
+    from mne.preprocessing import ICA
+    from mne.preprocessing import create_ecg_epochs, create_eog_epochs
+    from mne.datasets import sample
+
+    from icasso import Icasso
+
+
+
+
+
+
+
+
+Set up logging
+
+
+.. code-block:: default
+
+    logging.basicConfig(level=logging.INFO)
+
+
+
+
+
+
+
+
+Setup paths and prepare raw data.
+
+
+.. code-block:: default
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+
+    raw = mne.io.read_raw_fif(raw_fname, preload=True)
+    raw.filter(1, None, fir_design='firwin')
+
+    picks = mne.pick_types(raw.info, meg='grad', eeg=False, eog=False,
+                           stim=False, exclude='bads')
+    raw.drop_channels([ch_name for idx, ch_name in enumerate(raw.info['ch_names'])
+                       if idx not in picks])
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Opening raw data file /home/zairex/Code/cibr/sample_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+    Filtering raw data in 1 contiguous segment
+    Setting up high-pass filter at 1 Hz
+
+    FIR filter parameters
+    ---------------------
+    Designing a one-pass, zero-phase, non-causal highpass filter:
+    - Windowed time-domain design (firwin) method
+    - Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
+    - Lower passband edge: 1.00
+    - Lower transition bandwidth: 1.00 Hz (-6 dB cutoff frequency: 0.50 Hz)
+    - Filter length: 497 samples (3.310 sec)
+
+    Removing projector <Projection | PCA-v1, active : False, n_channels : 102>
+    Removing projector <Projection | PCA-v2, active : False, n_channels : 102>
+    Removing projector <Projection | PCA-v3, active : False, n_channels : 102>
+    Removing projector <Projection | Average EEG reference, active : False, n_channels : 60>
+
+    <Raw | sample_audvis_filt-0-40_raw.fif, 203 x 41700 (277.7 s), ~67.9 MB, data loaded>
+
+
+
+Plot raw data
+
+
+.. code-block:: default
+
+    raw.plot(block=True)
+
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_001.png
+    :alt: plot icasso from raw
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+
+    <Figure size 955x854 with 4 Axes>
+
+
+
+Define parameters for mne's ICA-object and create a Icasso object.
+Set bootstrap=True to use bootstrapping.
+
+
+.. code-block:: default
+
+    ica_params = {
+        'n_components':20,
+        'method': 'fastica',
+        'max_iter': 1000,
+    }
+    icasso = Icasso(ICA, ica_params=ica_params, iterations=30, 
+                    bootstrap=False, vary_init=True)
+
+
+
+
+
+
+
+
+Set up params for ICA.fit method.
+
+
+.. code-block:: default
+
+    fit_params = {
+        'decim': 3,
+        'verbose': 'warning'
+    }
+
+
+
+
+
+
+
+
+Set up function for getting bootstrapped versions of Raw object.
+
+
+.. code-block:: default
+
+    def bootstrap_fun(raw, generator):
+        sample_idxs = generator.choice(range(raw._data.shape[1]), size=raw._data.shape[1])
+        raw = raw.copy()
+        raw._data = raw._data[:, sample_idxs]
+        return raw
+
+
+
+
+
+
+
+
+Set up function to get unmixing matrix from mne's ICA object after fitting.
+
+
+.. code-block:: default
+
+    def unmixing_fun(ica):
+        unmixing_matrix = np.dot(ica.unmixing_matrix_, 
+                                 ica.pca_components_[:ica.n_components_])
+        return unmixing_matrix
+
+
+
+
+
+
+
+
+Set up function to store information about individual runs. 
+We do this to get pca mean and pre_whiten information.
+
+
+.. code-block:: default
+
+    def store_fun(ica):
+        data = {'pre_whitener': ica.pre_whitener_,
+                'pca_mean': ica.pca_mean_[:, np.newaxis]}
+        return data
+
+
+
+
+
+
+
+
+For replicability
+
+
+.. code-block:: default
+
+    random_state = 10
+    distance = 0.75
+
+
+
+
+
+
+
+
+Fit icasso to raw data.
+
+
+.. code-block:: default
+
+    icasso.fit(data=raw, fit_params=fit_params, random_state=random_state, 
+               bootstrap_fun=bootstrap_fun, unmixing_fun=unmixing_fun, 
+               store_fun=store_fun)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    INFO:icasso:Fitting ICA 30 times.
+
+
+
+
+Plot a dendogram
+
+
+.. code-block:: default
+
+    icasso.plot_dendrogram()
+
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_002.png
+    :alt: Hierarchical Clustering Dendrogram
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    INFO:icasso:Plotting dendrogram..
+
+    <Figure size 2500x1000 with 1 Axes>
+
+
+
+Plot the components in 2D space.
+
+
+.. code-block:: default
+
+    icasso.plot_mds(distance=distance, random_state=random_state)
+
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_003.png
+    :alt: MDS
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    INFO:icasso:Projecting components to 2D space with MDS
+    INFO:icasso:Plotting ICA components in 2D space..
+
+    <Figure size 2500x1000 with 1 Axes>
+
+
+
+Unmix using the centrotypes
+
+
+.. code-block:: default
+
+    unmixing, scores = icasso.get_centrotype_unmixing(distance=distance)
+    pca_mean, pre_whitener = icasso.store[0]['pca_mean'], icasso.store[0]['pre_whitener']
+    sources = np.dot(unmixing, (raw._data / pre_whitener) - pca_mean)
+
+
+
+
+
+
+
+
+Show cluster quality indices.
+
+
+.. code-block:: default
+
+    plt.figure()
+    plt.plot(range(1, len(scores)+1), scores)
+    plt.xticks(range(1, len(scores)+1), 
+               [str(idx) for idx in range(1, len(scores)+1)])
+    plt.xlabel('Component')
+    plt.ylabel('Quality index')
+    plt.show()
+
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_004.png
+    :alt: plot icasso from raw
+    :class: sphx-glr-single-img
+
+
+
+
+
+Create raw object using the icasso centrotype sources and plot it
+
+
+.. code-block:: default
+
+    sources = sources * 3e-04
+    info = mne.create_info(['ICA %03d' % (idx+1) for idx in range(sources.shape[0])], 
+                           raw.info['sfreq'], ch_types='misc')
+    components = mne.io.RawArray(sources, info)
+    components.plot(block=True)
+
+
+
+.. image:: /auto_examples/images/sphx_glr_plot_icasso_from_raw_005.png
+    :alt: plot icasso from raw
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Creating RawArray with float64 data, n_channels=21, n_times=41700
+        Range : 0 ... 41699 =      0.000 ...   277.709 secs
+    Ready.
+
+    <Figure size 955x854 with 4 Axes>
+
+
+
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 2 minutes  12.533 seconds)
+
+
+.. _sphx_glr_download_auto_examples_plot_icasso_from_raw.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
+
+
+  .. container:: sphx-glr-download sphx-glr-download-python
+
+     :download:`Download Python source code: plot_icasso_from_raw.py <plot_icasso_from_raw.py>`
+
+
+
+  .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+     :download:`Download Jupyter notebook: plot_icasso_from_raw.ipynb <plot_icasso_from_raw.ipynb>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.github.io>`_

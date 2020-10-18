@@ -28,6 +28,7 @@ author = 'Erkka Heinilä'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx_gallery.gen_gallery',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -50,3 +51,9 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+sphinx_gallery_conf = {
+    'example_dirs': '../examples',
+    'gallery_dirs': 'auto_examples',
+    'image_scrapers': ('matplotlib')
+}

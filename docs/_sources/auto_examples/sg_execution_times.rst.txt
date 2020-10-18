@@ -1,0 +1,14 @@
+
+:orphan:
+
+.. _sphx_glr_auto_examples_sg_execution_times:
+
+Computation times
+=================
+**02:21.276** total execution time for **auto_examples** files:
+
++-------------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_plot_icasso_from_raw.py` (``plot_icasso_from_raw.py``) | 02:12.533 | 0.0 MB |
++-------------------------------------------------------------------------------------+-----------+--------+
+| :ref:`sphx_glr_auto_examples_plot_icasso_fastica.py` (``plot_icasso_fastica.py``)   | 00:08.743 | 0.0 MB |
++-------------------------------------------------------------------------------------+-----------+--------+
