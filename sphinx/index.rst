@@ -1,5 +1,5 @@
 .. icasso documentation master file, created by
-   sphinx-quickstart on Fri Jul 13 00:23:03 2018.
+   sphinx-quickstart on Mon Oct 19 00:14:18 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -10,3 +10,4 @@ Welcome to icasso's example gallery!
    :maxdepth: 2
 
 * :ref:`sphx_glr_auto_examples_plot_icasso_from_raw.py`
+* :ref:`sphx_glr_auto_examples_plot_icasso_fastica.py`
