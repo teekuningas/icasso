@@ -77,7 +77,7 @@ icasso.plot_dendrogram()
 
 ##############################################################################
 # Plot mds
-icasso.plot_mds(distance=distance, random_state=random_state)
+icasso.plot_mds(distance=distance)
 
 ##############################################################################
 # Get the unmixing matrix and use it get the sources.
