@@ -4,18 +4,19 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Use Icasso to compute and validate ICA on MEG data &#8212; icasso  documentation</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/gallery-binder.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/gallery-dataframe.css" />
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
    
@@ -36,9 +37,10 @@
             
   <div class="sphx-glr-download-link-note admonition note">
 <p class="admonition-title">Note</p>
-<p>Click <a class="reference internal" href="#sphx-glr-download-auto-examples-plot-icasso-from-raw-py"><span class="std std-ref">here</span></a>     to download the full example code</p>
+<p>Click <a class="reference internal" href="#sphx-glr-download-auto-examples-plot-icasso-from-raw-py"><span class="std std-ref">here</span></a>
+to download the full example code</p>
 </div>
-<div class="sphx-glr-example-title section" id="use-icasso-to-compute-and-validate-ica-on-meg-data">
+<section class="sphx-glr-example-title" id="use-icasso-to-compute-and-validate-ica-on-meg-data">
 <span id="tut-icasso-meg"></span><span id="sphx-glr-auto-examples-plot-icasso-from-raw-py"></span><h1>Use Icasso to compute and validate ICA on MEG data<a class="headerlink" href="#use-icasso-to-compute-and-validate-ica-on-meg-data" title="Permalink to this headline">¶</a></h1>
 <p>ICA is fit to MEG raw data multiple times, and the performance is then visually inspected. Finally the components are retrieved as centrotypes of the most robust clusters.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Erkka Heinila &lt;erkka.heinila@jyu.fi&gt;</span>
@@ -76,7 +78,9 @@
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/zairex/Code/cibr/sample_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/erpipehe/Code/Teekuningas/icasso/examples/plot_icasso_from_raw.py:32: DeprecationWarning: data_path functions now return pathlib.Path objects which do not natively support the plus (+) operator, switch to using forward slash (/) instead. Support for plus will be removed in 1.2.
+  raw_fname = data_path + &#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;
+Opening raw data file /home/erpipehe/mne_data/MNE-sample-data//MEG/sample/sample_audvis_filt-0-40_raw.fif...
     Read a total of 4 projection items:
         PCA-v1 (1 x 102)  idle
         PCA-v2 (1 x 102)  idle
@@ -101,17 +105,89 @@ Removing projector &lt;Projection | PCA-v1, active : False, n_channels : 102&gt;
 Removing projector &lt;Projection | PCA-v2, active : False, n_channels : 102&gt;
 Removing projector &lt;Projection | PCA-v3, active : False, n_channels : 102&gt;
 Removing projector &lt;Projection | Average EEG reference, active : False, n_channels : 60&gt;
-
-&lt;Raw | sample_audvis_filt-0-40_raw.fif, 203 x 41700 (277.7 s), ~67.9 MB, data loaded&gt;
 </pre></div>
 </div>
-<p>Plot raw data</p>
+<div class="output_subarea output_html rendered_html output_result">
+<table class="table table-hover table-striped table-sm table-responsive small">
+    <tr>
+        <th>Measurement date</th>
+
+        <td>December 03, 2002  19:01:10 GMT</td>
+
+    </tr>
+    <tr>
+        <th>Experimenter</th>
+
+        <td>Unknown</td>
+
+    </tr>
+        <th>Participant</th>
+
+        <td>Unknown</td>
+
+    </tr>
+    <tr>
+        <th>Digitized points</th>
+
+        <td>0 points</td>
+
+    </tr>
+    <tr>
+        <th>Good channels</th>
+        <td>203 Gradiometers</td>
+    </tr>
+    <tr>
+        <th>Bad channels</th>
+        <td>None</td>
+    </tr>
+    <tr>
+        <th>EOG channels</th>
+        <td>Not available</td>
+    </tr>
+    <tr>
+        <th>ECG channels</th>
+        <td>Not available</td>
+
+    <tr>
+        <th>Sampling frequency</th>
+        <td>150.15 Hz</td>
+    </tr>
+
+
+    <tr>
+        <th>Highpass</th>
+        <td>1.00 Hz</td>
+    </tr>
+
+
+    <tr>
+        <th>Lowpass</th>
+        <td>40.00 Hz</td>
+    </tr>
+
+
+
+    <tr>
+        <th>Filenames</th>
+        <td>sample_audvis_filt-0-40_raw.fif</td>
+    </tr>
+
+    <tr>
+        <th>Duration</th>
+        <td>00:04:37 (HH:MM:SS)</td>
+    </tr>
+</table>
+</div>
+<br />
+<br /><p>Plot raw data</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="plot icasso from raw" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_001.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Figure size 955x854 with 4 Axes&gt;
+<img src="../_images/sphx_glr_plot_icasso_from_raw_001.png" srcset="../_images/sphx_glr_plot_icasso_from_raw_001.png" alt="plot icasso from raw" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Using matplotlib as 2D backend.
+Opening raw-browser...
+
+&lt;MNEBrowseFigure size 800x800 with 4 Axes&gt;
 </pre></div>
 </div>
 <p>Define parameters for mne’s ICA-object and create a Icasso object.
@@ -174,19 +250,17 @@ We do this to get pca mean and pre_whiten information.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">plot_dendrogram</span><span class="p">()</span>
 </pre></div>
 </div>
-<img alt="Hierarchical Clustering Dendrogram" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_002.png" />
-<p class="sphx-glr-script-out">Out:</p>
+<img src="../_images/sphx_glr_plot_icasso_from_raw_002.png" srcset="../_images/sphx_glr_plot_icasso_from_raw_002.png" alt="Hierarchical Clustering Dendrogram" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>INFO:icasso:Plotting dendrogram..
 
 &lt;Figure size 2500x1000 with 1 Axes&gt;
 </pre></div>
 </div>
 <p>Plot the components in 2D space.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">plot_mds</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">icasso</span><span class="o">.</span><span class="n">plot_mds</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="MDS" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_003.png" />
-<p class="sphx-glr-script-out">Out:</p>
+<img src="../_images/sphx_glr_plot_icasso_from_raw_003.png" srcset="../_images/sphx_glr_plot_icasso_from_raw_003.png" alt="MDS" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>INFO:icasso:Projecting components to 2D space with MDS
 INFO:icasso:Plotting ICA components in 2D space..
 
@@ -209,8 +283,7 @@ INFO:icasso:Plotting ICA components in 2D space..
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<img alt="plot icasso from raw" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_004.png" />
-<p>Create raw object using the icasso centrotype sources and plot it</p>
+<img src="../_images/sphx_glr_plot_icasso_from_raw_004.png" srcset="../_images/sphx_glr_plot_icasso_from_raw_004.png" alt="plot icasso from raw" class = "sphx-glr-single-img"/><p>Create raw object using the icasso centrotype sources and plot it</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span> <span class="o">*</span> <span class="mf">3e-04</span>
 <span class="n">info</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">create_info</span><span class="p">([</span><span class="s1">&#39;ICA </span><span class="si">%03d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
                        <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">ch_types</span><span class="o">=</span><span class="s1">&#39;misc&#39;</span><span class="p">)</span>
@@ -218,16 +291,16 @@ INFO:icasso:Plotting ICA components in 2D space..
 <span class="n">components</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="plot icasso from raw" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_icasso_from_raw_005.png" />
-<p class="sphx-glr-script-out">Out:</p>
+<img src="../_images/sphx_glr_plot_icasso_from_raw_005.png" srcset="../_images/sphx_glr_plot_icasso_from_raw_005.png" alt="plot icasso from raw" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Creating RawArray with float64 data, n_channels=21, n_times=41700
     Range : 0 ... 41699 =      0.000 ...   277.709 secs
 Ready.
+Opening raw-browser...
 
-&lt;Figure size 955x854 with 4 Axes&gt;
+&lt;MNEBrowseFigure size 800x800 with 4 Axes&gt;
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 2 minutes  12.533 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 1 minutes  5.173 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-icasso-from-raw-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/0885ab4deaf4d30010af3e1fa69aec67/plot_icasso_from_raw.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_icasso_from_raw.py</span></code></a></p>
@@ -237,7 +310,7 @@ Ready.
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
-</div>
+</section>
 
 
           </div>
@@ -268,7 +341,7 @@ Ready.
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -287,10 +360,10 @@ Ready.
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Erkka Heinilä.
+      &copy;1980, Erkka Heinilä.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

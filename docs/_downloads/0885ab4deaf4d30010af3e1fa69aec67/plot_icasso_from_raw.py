@@ -101,7 +101,7 @@ icasso.plot_dendrogram()
 
 ###############################################################################
 # Plot the components in 2D space.
-icasso.plot_mds(distance=distance, random_state=random_state)
+icasso.plot_mds(distance=distance)
 
 ###############################################################################
 # Unmix using the centrotypes
