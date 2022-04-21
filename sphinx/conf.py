@@ -53,7 +53,7 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 sphinx_gallery_conf = {
-    'example_dirs': '../examples',
+    'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
     'image_scrapers': ('matplotlib')
 }
